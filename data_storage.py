@@ -1,7 +1,7 @@
 import pickle
 import abc
 
-DATA_FILE = 'wiki_data.pickle'
+DATA_FILE = 'wiki_data_short.pickle'
 
 class dataBaseClass(abc.ABC):
     """"""
