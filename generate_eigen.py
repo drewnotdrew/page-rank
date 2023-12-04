@@ -25,11 +25,18 @@ def handle_v_gen(db):
         h = make_weighted_matrix(db,page_list)
         v = eigen_power_approximation(matrix = h, depth = EIGEN_POWER_APPROX_DEPTH)
         print(f"H matrix: \n {h}")
-        print(f"Eigen vector \n {v}")
 
     except npcore._exceptions._ArrayMemoryError as e:
         print("dataset too large to use matrix")
         print(e)
+        print("using non matrix math")
+        v = np.ones(shape = [1,len(page_list)])/len(page_list)
+        v = multiply_by_H(db,page_list,v,depth = EIGEN_POWER_APPROX_DEPTH)
+
+    print(f"Eigen vector \n {v}")
+    print((v.tolist()))
+    page_rankings = dict(zip(page_list,(v.T.tolist())))
+    print(page_rankings)
 
     
 def generate_page_list(db):
@@ -58,14 +65,16 @@ def get_row_weights(db,page_list):
         generate_match_list(page_list,db.links_from_page[key])
         ) for key in page_list])
 
-def multiply_by_H(db,page_list,v):
-    row_weights = get_row_weights(db,page_list).T
-    for i,key in enumerate(page_list):
-        match_set = db.links_to_page[key]
-        col = generate_match_list(page_list,match_set)
-        weighted_col = np.multiply(col,row_weights)
-        print(weighted_col)
-        v[i] = np.sum(np.multiply(weighted_col,row_weights.T))
+def multiply_by_H(db,page_list,v,depth=EIGEN_POWER_APPROX_DEPTH):
+    row_weights = get_row_weights(db,page_list)
+    for _ in range(depth):
+        for i,key in enumerate(page_list):
+            match_set = db.links_to_page[key]
+            col = generate_match_list(page_list,match_set)
+            weighted_col = np.matmul(col,row_weights)
+            print(weighted_col)
+            v[i] = weighted_col
+    return v
 
 
 if __name__=="__main__":
